@@ -1,13 +1,14 @@
 import React from 'react'
-import { mount } from 'enzyme'
 import { noop } from 'test-utility'
 import PreventClickOnDrag from 'lib/interaction/PreventClickOnDrag'
+import {fireEvent, render} from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 const defaultClickTolerance = 10
 describe('PreventClickOnDrag', () => {
-  it('should prevent click if element is dragged further than clickTolerance pixels forwards', () => {
+  it('should prevent click if element is dragged further than clickTolerance pixels forwards', async () => {
     const onClickMock = jest.fn()
-    const wrapper = mount(
+    const { container } = render(
       <PreventClickOnDrag
         onClick={onClickMock}
         clickTolerance={defaultClickTolerance}
@@ -18,20 +19,22 @@ describe('PreventClickOnDrag', () => {
 
     const originalClientX = 100
 
-    wrapper.simulate('mousedown', {
+    fireEvent.mouseDown(container.firstChild, {
       clientX: originalClientX
     })
-    wrapper.simulate('mouseup', {
+    fireEvent.mouseUp(container.firstChild, {
       clientX: originalClientX + defaultClickTolerance + 1
     })
-    wrapper.simulate('click')
+
+    const user = userEvent.setup();
+    await user.click(container.firstChild)
 
     expect(onClickMock).not.toHaveBeenCalled()
   })
 
-  it('should prevent click if element is dragged further than clickTolerance pixels backwards', () => {
+  it('should prevent click if element is dragged further than clickTolerance pixels backwards', async () => {
     const onClickMock = jest.fn()
-    const wrapper = mount(
+    const { container } = render(
       <PreventClickOnDrag
         onClick={onClickMock}
         clickTolerance={defaultClickTolerance}
@@ -41,19 +44,20 @@ describe('PreventClickOnDrag', () => {
     )
     const originalClientX = 100
 
-    wrapper.simulate('mousedown', {
+    fireEvent.mouseDown(container.firstChild, {
       clientX: originalClientX
     })
-    wrapper.simulate('mouseup', {
+    fireEvent.mouseUp(container.firstChild, {
       clientX: originalClientX - defaultClickTolerance - 1
     })
-    wrapper.simulate('click')
+    const user = userEvent.setup();
+    await user.click(container.firstChild)
 
     expect(onClickMock).not.toHaveBeenCalled()
   })
-  it('should not prevent click if element is dragged less than clickTolerance pixels forwards', () => {
+  it('should not prevent click if element is dragged less than clickTolerance pixels forwards', async () => {
     const onClickMock = jest.fn()
-    const wrapper = mount(
+    const { container } = render(
       <PreventClickOnDrag
         onClick={onClickMock}
         clickTolerance={defaultClickTolerance}
@@ -63,21 +67,22 @@ describe('PreventClickOnDrag', () => {
     )
     const originalClientX = 100
 
-    wrapper.simulate('mousedown', {
+    fireEvent.mouseDown(container.firstChild, {
       clientX: originalClientX
     })
 
-    wrapper.simulate('mouseup', {
+    fireEvent.mouseUp(container.firstChild, {
       clientX: originalClientX + defaultClickTolerance - 1
     })
-    wrapper.simulate('click')
+    const user = userEvent.setup();
+    await user.click(container.firstChild)
 
     expect(onClickMock).toHaveBeenCalledTimes(1)
   })
 
-  it('should not prevent click if element is dragged less than clickTolerance pixels backwards', () => {
+  it('should not prevent click if element is dragged less than clickTolerance pixels backwards', async () => {
     const onClickMock = jest.fn()
-    const wrapper = mount(
+    const { container } = render(
       <PreventClickOnDrag
         onClick={onClickMock}
         clickTolerance={defaultClickTolerance}
@@ -87,20 +92,21 @@ describe('PreventClickOnDrag', () => {
     )
     const originalClientX = 100
 
-    wrapper.simulate('mousedown', {
+    fireEvent.mouseDown(container.firstChild, {
       clientX: originalClientX
     })
 
-    wrapper.simulate('mouseup', {
+    fireEvent.mouseUp(container.firstChild, {
       clientX: originalClientX - defaultClickTolerance + 1
     })
-    wrapper.simulate('click')
+    const user = userEvent.setup();
+    await user.click(container.firstChild)
 
     expect(onClickMock).toHaveBeenCalledTimes(1)
   })
-  it('should not prevent click if first interaction was drag but second is click', () => {
+  it('should not prevent click if first interaction was drag but second is click', async () => {
     const onClickMock = jest.fn()
-    const wrapper = mount(
+    const { container } = render(
       <PreventClickOnDrag
         onClick={onClickMock}
         clickTolerance={defaultClickTolerance}
@@ -111,29 +117,30 @@ describe('PreventClickOnDrag', () => {
 
     const originalClientX = 100
 
-    wrapper.simulate('mousedown', {
+    fireEvent.mouseDown(container.firstChild, {
       clientX: originalClientX
     })
-    wrapper.simulate('mouseup', {
+    fireEvent.mouseUp(container.firstChild, {
       clientX: originalClientX + defaultClickTolerance + 1
     })
-    wrapper.simulate('click')
+    const user = userEvent.setup();
+    await user.click(container.firstChild)
 
     expect(onClickMock).not.toHaveBeenCalled()
 
-    wrapper.simulate('mousedown', {
+    fireEvent.mouseDown(container.firstChild, {
       clientX: originalClientX
     })
-    wrapper.simulate('mouseup', {
+    fireEvent.mouseUp(container.firstChild, {
       clientX: originalClientX + defaultClickTolerance - 1 // less thanthreshold
     })
-    wrapper.simulate('click')
+    await user.click(container.firstChild)
 
     expect(onClickMock).toHaveBeenCalled()
   })
-  it('calls all other event handlers in wrapped component', () => {
+  it('calls all other event handlers in wrapped component', async () => {
     const doubleClickMock = jest.fn()
-    const wrapper = mount(
+    const { container } = render(
       <PreventClickOnDrag
         onClick={jest.fn()}
         clickTolerance={defaultClickTolerance}
@@ -142,7 +149,8 @@ describe('PreventClickOnDrag', () => {
       </PreventClickOnDrag>
     )
 
-    wrapper.simulate('doubleclick', {})
+    const user = userEvent.setup();
+    await user.dblClick(container.firstChild)
 
     expect(doubleClickMock).toHaveBeenCalled()
   })
@@ -151,7 +159,7 @@ describe('PreventClickOnDrag', () => {
     // dont emit propType error
     jest.spyOn(global.console, 'error').mockImplementation(noop)
     expect(() =>
-      mount(
+      render(
         <PreventClickOnDrag
           onClick={noop}
           clickTolerance={defaultClickTolerance}

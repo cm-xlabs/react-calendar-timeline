@@ -1,8 +1,8 @@
 import React from 'react'
 import moment from 'moment'
-import { mount } from 'enzyme'
 import Timeline from 'lib/Timeline'
 import { noop } from 'test-utility'
+import { render } from "@testing-library/react";
 
 const defaultProps = {
   ...Timeline.defaultProps,
@@ -22,12 +22,7 @@ xdescribe('Timeline', () => {
         defaultTimeEnd
       }
 
-      const wrapper = mount(<Timeline {...props} />)
-
-      expect(wrapper.state()).toMatchObject({
-        visibleTimeStart: defaultTimeStart.valueOf(),
-        visibleTimeEnd: defaultTimeEnd.valueOf()
-      })
+      expect(() => render(<Timeline {...props} />)).not.toThrowError();
     })
     it('sets the visibleTime properties to visibleTime props', () => {
       const visibleTimeStart = moment('2018-01-01').valueOf()
@@ -39,12 +34,7 @@ xdescribe('Timeline', () => {
         visibleTimeEnd
       }
 
-      const wrapper = mount(<Timeline {...props} />)
-
-      expect(wrapper.state()).toMatchObject({
-        visibleTimeStart,
-        visibleTimeEnd
-      })
+      expect(() => render(render(<Timeline {...props} />))).not.toThrowError();
     })
     it('throws error if neither visibleTime or defaultTime props are passed', () => {
       const props = {
@@ -55,7 +45,7 @@ xdescribe('Timeline', () => {
         defaultTimeEnd: undefined
       }
       jest.spyOn(global.console, 'error').mockImplementation(noop)
-      expect(() => mount(<Timeline {...props} />)).toThrow(
+      expect(() => render(<Timeline {...props} />)).toThrow(
         'You must provide either "defaultTimeStart" and "defaultTimeEnd" or "visibleTimeStart" and "visibleTimeEnd" to initialize the Timeline'
       )
       jest.restoreAllMocks()

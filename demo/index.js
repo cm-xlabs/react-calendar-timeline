@@ -2,9 +2,11 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import 'react-calendar-timeline-css'
 import App from './app'
+import {createRoot} from "react-dom/client";
 
 const render = AppToRender => {
-  ReactDOM.render(<AppToRender />, document.getElementById('root'))
+  const root = createRoot(document.getElementById('root'));
+  root.render(<AppToRender />)
 }
 
 render(App)

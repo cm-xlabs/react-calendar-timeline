@@ -224,7 +224,7 @@ const items = [
   }
 ]
 
-ReactDOM.render(
+createRoot(document.getElementById('root')).render(
   <div>
     Rendered by react!
     <Timeline
@@ -233,8 +233,7 @@ ReactDOM.render(
       defaultTimeStart={moment().add(-12, 'hour')}
       defaultTimeEnd={moment().add(12, 'hour')}
     />
-  </div>,
-  document.getElementById('root')
+  </div>
 )
 ```
 

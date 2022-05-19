@@ -1,7 +1,7 @@
 import React from 'react'
-import { mount } from 'enzyme'
 import { sel, noop } from 'test-utility'
 import ScrollElement from 'lib/scroll/ScrollElement'
+import {fireEvent, render} from "@testing-library/react";
 
 const defaultProps = {
   width: 1000,
@@ -33,7 +33,7 @@ xdescribe('ScrollElement', () => {
       onMouseMoveMock,
       onMouseEnterMock,
       onContextMenuMock,
-      wrapper
+      container
 
     beforeEach(() => {
       onDoubleClickMock = jest.fn()
@@ -51,39 +51,39 @@ xdescribe('ScrollElement', () => {
         onContextMenu: onContextMenuMock
       }
 
-      wrapper = mount(
+      container = render(
         <ScrollElement {...props}>
           <div />
         </ScrollElement>
-      )
+      ).container;
     })
 
     it('scroll element onMouseLeave calls passed in onMouseLeave', () => {
-      wrapper.find(scrollElementSelector).simulate('mouseleave')
+      fireEvent.mouseLeave(container.querySelector(scrollElementSelector));
       expect(onMouseLeaveMock).toHaveBeenCalledTimes(1)
     })
     it('scroll element onMouseMove calls passed in onMouseMove', () => {
-      wrapper.find(scrollElementSelector).simulate('mousemove')
+      fireEvent.mouseMove(container.querySelector(scrollElementSelector));
       expect(onMouseMoveMock).toHaveBeenCalledTimes(1)
     })
     it('scroll element onMouseEnter calls passed in onMouseEnter', () => {
-      wrapper.find(scrollElementSelector).simulate('mouseenter')
+      fireEvent.mouseEnter(container.querySelector(scrollElementSelector));
       expect(onMouseEnterMock).toHaveBeenCalledTimes(1)
     })
     it('scroll element onContextMenu calls passed in onContextMenu', () => {
-      wrapper.find(scrollElementSelector).simulate('contextmenu')
+      fireEvent.contextMenu(container.querySelector(scrollElementSelector));
       expect(onContextMenuMock).toHaveBeenCalledTimes(1)
     })
   })
   describe('mouse drag', () => {
-    let wrapper
+    let container
 
     beforeEach(() => {
-      wrapper = mount(
+      container = render(
         <ScrollElement {...defaultProps}>
           <div />
         </ScrollElement>
-      )
+      ).container
     })
     it('scrolls left', () => {
       const originX = 100
@@ -94,14 +94,13 @@ xdescribe('ScrollElement', () => {
       const mouseDownEvent = createMouseEvent(originX)
       const mouseOverEvent = createMouseEvent(destinationX)
 
-      wrapper.instance().scrollComponent.scrollLeft = originX
+      container.firstElementChild.scrollComponent.scrollLeft = originX
 
-      wrapper
-        .find(scrollElementSelector)
-        .simulate('mousedown', mouseDownEvent)
-        .simulate('mousemove', mouseOverEvent)
+      const scrollElement = container.querySelector(scrollElementSelector);
+      fireEvent.mouseDown(scrollElement, mouseDownEvent);
+      fireEvent.mouseMove(scrollElement, mouseOverEvent);
 
-      expect(wrapper.instance().scrollComponent.scrollLeft).toBe(
+      expect(container.firstElementChild.scrollComponent.scrollLeft).toBe(
         originX + scrollDifference
       )
     })
@@ -115,14 +114,13 @@ xdescribe('ScrollElement', () => {
       const mouseDownEvent = createMouseEvent(originX)
       const mouseOverEvent = createMouseEvent(destinationX)
 
-      wrapper.instance().scrollComponent.scrollLeft = originX
+      container.firstElementChild.scrollComponent.scrollLeft = originX
 
-      wrapper
-        .find(scrollElementSelector)
-        .simulate('mousedown', mouseDownEvent)
-        .simulate('mousemove', mouseOverEvent)
+      const scrollElement = container.querySelector(scrollElementSelector);
+      fireEvent.mouseDown(scrollElement, mouseDownEvent);
+      fireEvent.mouseMove(scrollElement, mouseOverEvent);
 
-      expect(wrapper.instance().scrollComponent.scrollLeft).toBe(
+      expect(container.firstElementChild.scrollComponent.scrollLeft).toBe(
         originX + scrollDifference
       )
     })
@@ -131,25 +129,24 @@ xdescribe('ScrollElement', () => {
   describe('mouse leave', () => {
     // guard against bug where dragging persisted after mouse leave
     it('cancels dragging on mouse leave', () => {
-      const wrapper = mount(
+      const { container } = render(
         <ScrollElement {...defaultProps}>
           <div />
         </ScrollElement>
       )
 
-      const initialScrollLeft = wrapper.instance().scrollComponent.scrollLeft
+      const initialScrollLeft = container.firstElementChild.scrollComponent.scrollLeft
       const mouseDownEvent = createMouseEvent(100)
       const mouseLeaveEvent = createMouseEvent(100)
       const mouseMoveEvent = createMouseEvent(200)
 
-      wrapper
-        .find(scrollElementSelector)
-        .simulate('mousedown', mouseDownEvent)
-        .simulate('mouseleave', mouseLeaveEvent)
-        .simulate('mousemove', mouseMoveEvent)
+      const scrollElement = container.querySelector(scrollElementSelector);
+      fireEvent.mouseDown(scrollElement, mouseDownEvent);
+      fireEvent.mouseLeave(scrollElement, mouseLeaveEvent);
+      fireEvent.mouseMove(scrollElement, mouseMoveEvent);
 
       // scrollLeft doesnt move
-      expect(wrapper.instance().scrollComponent.scrollLeft).toBe(
+      expect(container.firstElementChild.scrollComponent.scrollLeft).toBe(
         initialScrollLeft
       )
     })
@@ -163,15 +160,15 @@ xdescribe('ScrollElement', () => {
         onScroll: onScrollMock
       }
 
-      const wrapper = mount(
+      const { container } = render(
         <ScrollElement {...props}>
           <div />
         </ScrollElement>
       )
       const scrollLeft = 200
-      wrapper.instance().scrollComponent.scrollLeft = scrollLeft
+      container.firstElementChild.scrollComponent.scrollLeft = scrollLeft
 
-      wrapper.find(scrollElementSelector).simulate('scroll')
+      fireEvent.scroll(container.querySelector(scrollElementSelector));
 
       expect(onScrollMock).toHaveBeenCalledTimes(1)
     })
@@ -182,18 +179,18 @@ xdescribe('ScrollElement', () => {
         width
       }
 
-      const wrapper = mount(
+      const { container } = render(
         <ScrollElement {...props}>
           <div />
         </ScrollElement>
       )
 
       const currentScrollLeft = 300
-      wrapper.instance().scrollComponent.scrollLeft = currentScrollLeft
+      container.firstElementChild.scrollComponent.scrollLeft = currentScrollLeft
 
-      wrapper.simulate('scroll')
+      fireEvent.scroll(container.firstElementChild);
 
-      expect(wrapper.instance().scrollComponent.scrollLeft).toBe(
+      expect(container.firstElementChild.scrollComponent.scrollLeft).toBe(
         currentScrollLeft + width
       )
     })
@@ -204,18 +201,18 @@ xdescribe('ScrollElement', () => {
         width
       }
 
-      const wrapper = mount(
+      const { container } = render(
         <ScrollElement {...props}>
           <div />
         </ScrollElement>
       )
 
       const currentScrollLeft = 1300
-      wrapper.instance().scrollComponent.scrollLeft = currentScrollLeft
+      container.firstElementChild.scrollComponent.scrollLeft = currentScrollLeft
 
-      wrapper.simulate('scroll')
+      fireEvent.scroll(container.firstElementChild)
 
-      expect(wrapper.instance().scrollComponent.scrollLeft).toBe(
+      expect(container.firstElementChild.scrollComponent.scrollLeft).toBe(
         currentScrollLeft - width
       )
     })
@@ -227,7 +224,7 @@ xdescribe('ScrollElement', () => {
         width
       }
 
-      const wrapper = mount(
+      const { container } = render(
         <ScrollElement {...props}>
           <div />
         </ScrollElement>
@@ -237,11 +234,11 @@ xdescribe('ScrollElement', () => {
       const scrolls = [width * 0.5 + 1, width, width * 1.5 - 1]
 
       scrolls.forEach(scroll => {
-        wrapper.instance().scrollComponent.scrollLeft = scroll
+        container.firstElementChild.scrollComponent.scrollLeft = scroll
 
-        wrapper.simulate('scroll')
+        fireEvent.scroll(container.firstElementChild);
 
-        expect(wrapper.instance().scrollComponent.scrollLeft).toBe(scroll)
+        expect(container.firstElementChild.scrollComponent.scrollLeft).toBe(scroll)
       })
     })
   })

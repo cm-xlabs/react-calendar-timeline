@@ -1,8 +1,10 @@
 import React from 'react'
-import { mount } from 'enzyme'
 import Timeline from 'lib/Timeline'
 
 import moment from 'moment'
+
+// not migrating disabled tests for now...
+const mount = () => { return {} };
 
 const groups = [
   { id: 2, title: 'group 2' },
