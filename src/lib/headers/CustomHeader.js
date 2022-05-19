@@ -1,8 +1,9 @@
 import React from 'react'
 import PropTypes from 'prop-types'
+import memoize from 'memoize-one'
 import { TimelineHeadersConsumer } from './HeadersContext'
 import { TimelineStateConsumer } from '../timeline/TimelineStateContext'
-import { iterateTimes, calculateXPositionForTime } from '../utility/calendar'
+import { iterateTimes } from '../utility/calendar'
 
 export class CustomHeader extends React.Component {
   static propTypes = {
@@ -15,95 +16,22 @@ export class CustomHeader extends React.Component {
     visibleTimeEnd: PropTypes.number.isRequired,
     canvasTimeStart: PropTypes.number.isRequired,
     canvasTimeEnd: PropTypes.number.isRequired,
+    timelineWidth: PropTypes.number.isRequired,
     canvasWidth: PropTypes.number.isRequired,
     showPeriod: PropTypes.func.isRequired,
     headerData: PropTypes.object,
     getLeftOffsetFromDate: PropTypes.func.isRequired,
     height: PropTypes.number.isRequired,
   }
-  constructor(props) {
-    super(props)
-    const {
+  intervals = memoize(
+    (
       canvasTimeStart,
       canvasTimeEnd,
       canvasWidth,
       unit,
       timeSteps,
       showPeriod,
-      getLeftOffsetFromDate
-    } = props
-
-    const intervals = this.getHeaderIntervals({
-      canvasTimeStart,
-      canvasTimeEnd,
-      canvasWidth,
-      unit,
-      timeSteps,
-      showPeriod,
-      getLeftOffsetFromDate
-    })
-
-    this.state = {
-      intervals
-    }
-  }
-
-  shouldComponentUpdate(nextProps) {
-    if (
-      nextProps.canvasTimeStart !== this.props.canvasTimeStart ||
-      nextProps.canvasTimeEnd !== this.props.canvasTimeEnd ||
-      nextProps.canvasWidth !== this.props.canvasWidth ||
-      nextProps.unit !== this.props.unit ||
-      nextProps.timeSteps !== this.props.timeSteps ||
-      nextProps.showPeriod !== this.props.showPeriod ||
-      nextProps.children !== this.props.children ||
-      nextProps.headerData !== this.props.headerData
-    ) {
-      return true
-    }
-    return false
-  }
-
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    if (
-      nextProps.canvasTimeStart !== this.props.canvasTimeStart ||
-      nextProps.canvasTimeEnd !== this.props.canvasTimeEnd ||
-      nextProps.canvasWidth !== this.props.canvasWidth ||
-      nextProps.unit !== this.props.unit ||
-      nextProps.timeSteps !== this.props.timeSteps ||
-      nextProps.showPeriod !== this.props.showPeriod
-    ) {
-      const {
-        canvasTimeStart,
-        canvasTimeEnd,
-        canvasWidth,
-        unit,
-        timeSteps,
-        showPeriod,
-        getLeftOffsetFromDate
-      } = nextProps
-
-      const intervals = this.getHeaderIntervals({
-        canvasTimeStart,
-        canvasTimeEnd,
-        canvasWidth,
-        unit,
-        timeSteps,
-        showPeriod,
-        getLeftOffsetFromDate
-      })
-
-      this.setState({ intervals })
-    }
-  }
-
-  getHeaderIntervals = ({
-    canvasTimeStart,
-    canvasTimeEnd,
-    unit,
-    timeSteps,
-    getLeftOffsetFromDate
-  }) => {
+      getLeftOffsetFromDate) => {
     const intervals = []
     iterateTimes(
       canvasTimeStart,
@@ -123,6 +51,18 @@ export class CustomHeader extends React.Component {
       }
     )
     return intervals
+  })
+
+  shouldComponentUpdate(nextProps) {
+    return nextProps.canvasTimeStart !== this.props.canvasTimeStart ||
+      nextProps.canvasTimeEnd !== this.props.canvasTimeEnd ||
+      nextProps.canvasWidth !== this.props.canvasWidth ||
+      nextProps.unit !== this.props.unit ||
+      nextProps.timeSteps !== this.props.timeSteps ||
+      nextProps.showPeriod !== this.props.showPeriod ||
+      nextProps.children !== this.props.children ||
+      nextProps.headerData !== this.props.headerData;
+
   }
 
   getRootProps = (props = {}) => {
@@ -167,12 +107,15 @@ export class CustomHeader extends React.Component {
     const {
       canvasTimeStart,
       canvasTimeEnd,
+      canvasWidth,
       unit,
+      timeSteps,
       showPeriod,
       timelineWidth,
       visibleTimeStart,
       visibleTimeEnd,
       headerData,
+      getLeftOffsetFromDate,
     } = this.props
     //TODO: only evaluate on changing params
     return {
@@ -185,7 +128,7 @@ export class CustomHeader extends React.Component {
       },
       headerContext: {
         unit,
-        intervals: this.state.intervals
+        intervals: this.intervals(canvasTimeStart, canvasTimeEnd, canvasWidth, unit, timeSteps, showPeriod, getLeftOffsetFromDate)
       },
       getRootProps: this.getRootProps,
       getIntervalProps: this.getIntervalProps,
@@ -209,15 +152,15 @@ const CustomHeaderWrapper = ({ children, unit, headerData, height }) => (
         <TimelineHeadersConsumer>
           {({ timeSteps }) => (
             <CustomHeader
-              children={children}
               timeSteps={timeSteps}
               showPeriod={showPeriod}
               unit={unit ? unit : timelineState.timelineUnit}
               {...timelineState}
               headerData={headerData}
               getLeftOffsetFromDate={getLeftOffsetFromDate}
-              height={height}
-            />
+              height={height}>
+              {children}
+            </CustomHeader>
           )}
         </TimelineHeadersConsumer>
       )
