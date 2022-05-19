@@ -3,6 +3,7 @@
   "version": "1.0.0-SNAPSHOT",
   "description": "react calendar timeline",
   "main": "lib/index.js",
+  "types": "src/index.d.ts",
   "scripts": {
     "build": "npm run build:lib",
     "build:demo": "echo '!!! Building Demo' && cross-env NODE_ENV=production webpack --progress",
